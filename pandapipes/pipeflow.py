@@ -8,8 +8,8 @@ from pandapipes.component_models import Junction
 from pandapipes.component_models.abstract_models import NodeComponent, NodeElementComponent, \
     BranchComponent, BranchWInternalsComponent
 from pandapipes.component_models.auxiliaries import build_system_matrix
-from pandapipes.idx_branch import ACTIVE as ACTIVE_BR, FROM_NODE, TO_NODE, FROM_NODE_T, \
-    TO_NODE_T, VINIT, T_OUT, VINIT_T
+from pandapipes.idx_branch import ACTIVE as ACTIVE_BR, FROM_NODE, TO_NODE, FROM_NODE_T,  \
+    TO_NODE_T, VINIT, T_OUT, VINIT_T, RHO, ETA, CP, TINIT as TINIT_BRANCH
 from pandapipes.idx_node import PINIT, TINIT, ACTIVE as ACTIVE_ND
 from pandapipes.pipeflow_setup import get_net_option, get_net_options, set_net_option, \
     init_options, create_internal_results, write_internal_results, extract_all_results, \
@@ -17,6 +17,7 @@ from pandapipes.pipeflow_setup import get_net_option, get_net_options, set_net_o
     extract_results_active_pit, set_user_pf_options
 from pandapower.auxiliary import ppException
 from scipy.sparse.linalg import spsolve
+from pandapipes.properties.fluids import get_fluid
 
 try:
     import pplog as logging
@@ -96,14 +97,71 @@ def pipeflow(net, sol_vec=None, **kwargs):
         else:
             logger.warning("Converged flag not set. Make sure that hydraulic calculation results "
                            "are available.")
-    elif calculation_mode == "all":
-        hydraulics(net)
-        heat_transfer(net)
+#    elif calculation_mode == "all":
+#        hydraulics(net)
+#        heat_transfer(net)
+    elif calculation_mode == 'seg':
+        tol_p, tol_v, tol_T, tol_res, seg_iter = get_net_options(
+            net, "tol_p", "tol_v", "tol_T", "tol_res", "seg_iter")
+
+        seg_iter_orig = seg_iter
+
+        while not get_net_option(net, "seg_converged") and seg_iter > 0:
+            branch_pit = net["_active_pit"]["branch"]
+            node_pit = net["_active_pit"]["node"]
+            set_net_option(net, "converged", False)
+
+            hyd_old_p = node_pit[:, PINIT]
+            hyd_old_v = node_pit[:, VINIT]
+            hydraulics(net)
+            hyd_new_p = node_pit[:, PINIT]
+            hyd_new_v = node_pit[:, VINIT]
+
+            delta_p = np.abs(hyd_new_p - hyd_old_p)
+            delta_v = np.abs(hyd_new_v - hyd_old_v)
+            err_p = linalg.norm(delta_p)/len(delta_p)
+            err_v = linalg.norm(delta_v) / len(delta_v)
+
+            therm_old_t = np.abs(node_pit[:, TINIT])
+            therm_old_t_out = np.abs(branch_pit[:, T_OUT])
+            heat_transfer(net)
+            therm_new_t = node_pit[:, TINIT]
+            therm_new_t_out = branch_pit[:, T_OUT]
+
+            delta_t = therm_new_t - therm_old_t
+            delta_t_out = therm_new_t_out - therm_old_t_out
+            err_t = linalg.norm(delta_t) / len(delta_t)
+            err_t_out = linalg.norm(delta_t_out) / len(delta_t_out)
+
+            if seg_iter_orig > 1:
+                update_properties(net, node_pit, branch_pit)
+
+            seg_iter -= 1
+
+            if err_p <= tol_p and err_v <=tol_v and err_t < tol_T and err_t_out <= tol_T:
+                        set_net_option(net, "seg_converged", True)
+
+
     else:
         logger.warning("No proper calculation mode chosen.")
 
     extract_results_active_pit(net, node_pit, branch_pit, nodes_connected, branches_connected)
     extract_all_results(net, Junction.table_name())
+
+
+
+
+
+def update_properties(net, node_pit, branch_pit):
+    fn = branch_pit[:, FROM_NODE_T].astype(np.int32)
+    tn = branch_pit[:,TO_NODE_T].astype(np.int32)
+    branch_pit = net["_active_pit"]["branch"]
+    branch_pit[:, TINIT_BRANCH] = (node_pit[fn, TINIT] + node_pit[
+        tn, TINIT]) / 2
+    fluid = get_fluid(net)
+    branch_pit[:, RHO] = fluid.get_density(branch_pit[:, TINIT_BRANCH])
+    branch_pit[:, ETA] = fluid.get_viscosity(branch_pit[:, TINIT_BRANCH])
+    branch_pit[:, CP] = fluid.get_heat_capacity(branch_pit[:, TINIT_BRANCH])
 
 
 def hydraulics(net):
