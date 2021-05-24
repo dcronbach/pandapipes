@@ -5,7 +5,7 @@
 import numpy as np
 from numpy import dtype
 from pandapipes.component_models.abstract_models import BranchWZeroLengthComponent
-from pandapipes.idx_branch import D, AREA, LOSS_COEFFICIENT as LC, PL, TL
+from pandapipes.idx_branch import D, AREA, LOSS_COEFFICIENT, VINIT as LC, PL, TL, VINIT
 from pandapipes.pipeflow_setup import get_fluid
 
 
@@ -44,6 +44,7 @@ class Valve(BranchWZeroLengthComponent):
         valve_pit[:, D] = net[cls.table_name()].diameter_m.values
         valve_pit[:, AREA] = valve_pit[:, D] ** 2 * np.pi / 4
         valve_pit[:, LC] = net[cls.table_name()].loss_coefficient.values
+        valve_pit[:, VINIT] = net[cls.table_name()].v_init.values
 
     @classmethod
     def calculate_pressure_lift(cls, net, valve_pit, node_pit):

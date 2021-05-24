@@ -139,6 +139,8 @@ class Pipe(BranchWInternalsComponent):
                                        internal_pipe_number)
         pipe_pit[:, QEXT] = np.repeat(net[cls.table_name()].qext_w.values,
                                       internal_pipe_number)
+        pipe_pit[:, VINIT] = np.repeat(net[cls.table_name()].v_init.values,
+                                      internal_pipe_number)
         pipe_pit[:, TEXT] = np.repeat(net[cls.table_name()].text_k.values,
                                       internal_pipe_number)
         pipe_pit[:, D] = np.repeat(net[cls.table_name()].diameter_m.values, internal_pipe_number)
