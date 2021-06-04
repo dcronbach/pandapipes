@@ -7,7 +7,7 @@ import json
 from functools import partial
 from inspect import isclass
 
-from pandapipes.multinet.create_multinet import MultiNet, create_empty_multinet
+from pandapipes.multinet.multinet import MultiNet
 from pandapipes.component_models.abstract_models import Component
 from pandapipes.create import create_empty_network
 from pandapipes.pandapipes_net import pandapipesNet, get_basic_net_entries
