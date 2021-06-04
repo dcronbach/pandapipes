@@ -116,6 +116,49 @@ def create_junction(net, pn_bar, tfluid_k, height_m=0, name=None, index=None, in
     return index
 
 
+def create_outflow(net, junction,  scaling=1., name=None, index=None, in_service=True,
+                type='sink', **kwargs):
+    """
+    Adds one sink in table net["sink"].
+
+    :param net: The net for which this sink should be created
+    :type net: pandapipesNet
+    :param junction: The index of the junction to which the sink is connected
+    :type junction: int
+    :param mdot_kg_per_s: The required mass flow
+    :type mdot_kg_per_s: float, default None
+    :param scaling: An optional scaling factor to be set customly
+    :type scaling: float, default 1
+    :param name: A name tag for this sink
+    :type name: str, default None
+    :param index: Force a specified ID if it is available. If None, the index one higher than the\
+            highest already existing index is selected.
+    :type index: int, default None
+    :param in_service: True for in service, False for out of service
+    :type in_service: bool, default True
+    :param type: Type variable to classify the sink
+    :type type: str, default None
+    :param kwargs: Additional keyword arguments will be added as further columns to the\
+            net["sink"] table
+    :return: index - The unique ID of the created element
+    :rtype: int
+
+    :Example:
+        >>> new_sink_id = create_sink(net, junction=2, mdot_kg_per_s=0.1)
+
+    """
+    add_new_component(net, Sink)
+
+    _check_junction_element(net, junction)
+    index = _get_index_with_check(net, "sink", index)
+
+    cols = ["name", "junction", "mdot_kg_per_s", "scaling", "in_service", "type"]
+    vals = [name, junction, mdot_kg_per_s, scaling, bool(in_service), type]
+    _set_entries(net, "sink", index, **dict(zip(cols, vals)), **kwargs)
+
+    return index
+
+
 def create_sink(net, junction, mdot_kg_per_s, scaling=1., name=None, index=None, in_service=True,
                 type='sink', **kwargs):
     """
@@ -381,7 +424,7 @@ def create_pipe(net, from_junction, to_junction, std_type, length_km, k_mm=1, lo
 def create_pipe_from_parameters(net, from_junction, to_junction, length_km, diameter_m, k_mm=1,
                                 loss_coefficient=0, sections=1, alpha_w_per_m2k=0., text_k=293,
                                 qext_w=0., name=None, index=None, geodata=None, in_service=True,
-                                type="pipe", **kwargs):
+                                type="pipe", v_init=0.001, **kwargs):
     """
     Creates a pipe element in net["pipe"] from pipe parameters.
 
@@ -440,7 +483,7 @@ def create_pipe_from_parameters(net, from_junction, to_junction, length_km, diam
          "std_type": None, "length_km": length_km, "diameter_m": diameter_m, "k_mm": k_mm,
          "loss_coefficient": loss_coefficient, "alpha_w_per_m2k": alpha_w_per_m2k,
          "sections": sections, "in_service": bool(in_service),
-         "type": type, "qext_w": qext_w, "text_k": text_k}
+         "type": type, "qext_w": qext_w, "text_k": text_k, "v_init": v_init}
     if 'std_type' in kwargs:
         raise UserWarning('you have defined a std_type, however, using this function you can only '
                           'create a pipe setting specific, individual parameters. If you want to '
@@ -453,7 +496,7 @@ def create_pipe_from_parameters(net, from_junction, to_junction, length_km, diam
     return index
 
 
-def create_valve(net, from_junction, to_junction, diameter_m, opened=True, loss_coefficient=0,
+def create_valve(net, from_junction, to_junction, diameter_m, opened=True, loss_coefficient=0, v_init=0.001,
                  name=None, index=None, type='valve', **kwargs):
     """
     Creates a valve element in net["valve"] from valve parameters.
@@ -494,7 +537,7 @@ def create_valve(net, from_junction, to_junction, diameter_m, opened=True, loss_
 
     v = {"name": name, "from_junction": from_junction, "to_junction": to_junction,
          "diameter_m": diameter_m, "opened": opened, "loss_coefficient": loss_coefficient,
-         "type": type}
+         "type": type, "v_init": v_init}
     _set_entries(net, "valve", index, **v, **kwargs)
 
     return index

@@ -175,6 +175,7 @@ def build_system_matrix(net, branch_pit, node_pit, heat_mode):
         tn_unique, tn_sums = _sum_by_group(tn, branch_pit[:, LOAD_VEC_NODES])
         load_vector[fn_unique] -= fn_sums
         load_vector[tn_unique] += tn_sums
+        #load_vector[1] += -1*(tn_sums[0]-fn_sums[1])
         load_vector[slack_nodes] = 0
     else:
         tn_unique, tn_sums = _sum_by_group(tn, branch_pit[:, LOAD_VEC_NODES_T])

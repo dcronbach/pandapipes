@@ -97,9 +97,9 @@ def pipeflow(net, sol_vec=None, **kwargs):
         else:
             logger.warning("Converged flag not set. Make sure that hydraulic calculation results "
                            "are available.")
-#    elif calculation_mode == "all":
-#        hydraulics(net)
-#        heat_transfer(net)
+    elif calculation_mode == "all":
+       hydraulics(net)
+       heat_transfer(net)
     elif calculation_mode == 'seg':
         tol_p, tol_v, tol_T, tol_res, seg_iter = get_net_options(
             net, "tol_p", "tol_v", "tol_T", "tol_res", "seg_iter")
@@ -147,6 +147,8 @@ def pipeflow(net, sol_vec=None, **kwargs):
 
     extract_results_active_pit(net, node_pit, branch_pit, nodes_connected, branches_connected)
     extract_all_results(net, Junction.table_name())
+
+
 
 
 
