@@ -59,6 +59,9 @@ class MultiNet(ADict):
             self.update(**net.deepcopy())
 
         self['controller'] = pd.DataFrame(np.zeros(0, dtype=self['controller']), index=[])
+        self.ctrl_variables = None
+        self.controller_order = None
+        self.measure = None
         self['name'] = name
 
 
@@ -173,3 +176,13 @@ class MultiNet(ADict):
 
     def get_lines(self):
         return self._line
+
+    def check_multinet(self):
+        if isinstance(self.power_net, pandapowerNet) and isinstance(self.gas_net, pandapipesNet):
+            return True
+        else:
+            return False
+
+if __name__ == "__main__":
+    mn = MultiNet()
+    print(mn["controller"].empty)

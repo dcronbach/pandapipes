@@ -139,6 +139,17 @@ def run_control(multinet, ctrl_variables=None, max_iter=30, **kwargs):
     :return: runs an entire control loop
     :rtype: None
     """
+    ctrl_variables, controller_order = prepare_control(multinet, ctrl_variables, **kwargs)
+
+
+    # run each controller step in given controller order
+    control_implementation(multinet, controller_order, ctrl_variables, max_iter,
+                           evaluate_net_fct=_evaluate_multinet, **kwargs)
+
+    # call finalize function of each controller
+    control_finalization(controller_order)
+
+def prepare_control(multinet, ctrl_variables, **kwargs):
     ctrl_variables = prepare_run_ctrl(multinet, ctrl_variables)
     controller_order = ctrl_variables['controller_order']
 
@@ -148,13 +159,7 @@ def run_control(multinet, ctrl_variables=None, max_iter=30, **kwargs):
     # initial run (takes time, but is not needed for every kind of controller)
     ctrl_variables = net_initialization_multinet(multinet, ctrl_variables, **kwargs)
 
-    # run each controller step in given controller order
-    control_implementation(multinet, controller_order, ctrl_variables, max_iter,
-                           evaluate_net_fct=_evaluate_multinet, **kwargs)
-
-    # call finalize function of each controller
-    control_finalization(controller_order)
-
+    return ctrl_variables, controller_order
 
 def get_controller_order_multinet(multinet):
     """

@@ -12,9 +12,9 @@ from pandapipes.multinet.control.controller.multinet_control import P2GControlMu
     GasToGasConversion, coupled_p2g_const_control
 from pandapipes.multinet.control.run_control_multinet import run_control
 from pandapipes import networks as g_nw
-from pandapipes.multinet.create_multinet import create_empty_multinet, add_nets_to_multinet
 from pandapower import networks as e_nw
 from pandapower.control.controller.const_control import ConstControl
+from pandapipes.multinet import MultiNet
 
 
 @pytest.fixture
@@ -48,8 +48,8 @@ def test_p2g_single(get_gas_example, get_power_example_simple):
     assert fluid["name"] == pandapipes.get_fluid(net_gas).name
 
     # set up multinet
-    mn = create_empty_multinet("test_p2g")
-    add_nets_to_multinet(mn, power=net_power, gas=net_gas)
+    mn = MultiNet(name="test_p2g")
+    mn.add_nets(power=net_power, gas=net_gas)
 
     # add components to represent P2G unit
     p_p2g_el = 50
@@ -83,8 +83,8 @@ def test_g2p_single(get_gas_example, get_power_example_simple):
     assert fluid["name"] == pandapipes.get_fluid(net_gas).name
 
     # set up multinet
-    mn = create_empty_multinet("test_g2p")
-    add_nets_to_multinet(mn, power=net_power, gas=net_gas)
+    mn = MultiNet(name="test_p2g")
+    mn.add_nets(power=net_power, gas=net_gas)
 
     # add components to represent G2P unit
     gas_cons_kg_per_s = 0.5
@@ -123,8 +123,8 @@ def test_g2g_single(get_gas_example):
     pandapipes.create_fluid_from_lib(net_gas2, fluid2["name"], overwrite=True)
 
     # set up multinet
-    mn = create_empty_multinet("test_g2g")
-    add_nets_to_multinet(mn, hgas_net=net_gas1, hydrogen_net=net_gas2)
+    mn = MultiNet(name="test_p2g")
+    mn.add_nets(hgas_net=net_gas1, hydrogen_net=net_gas2)
 
     # add components to represent G2P unit
     gas1_cons_kg_per_s = 0.5
@@ -160,8 +160,8 @@ def test_p2g_multiple(get_gas_example, get_power_example_simple):
     assert fluid["name"] == pandapipes.get_fluid(net_gas).name
 
     # set up multinet
-    mn = create_empty_multinet("test_p2g")
-    add_nets_to_multinet(mn, power=net_power, gas=net_gas)
+    mn = MultiNet(name="test_p2g")
+    mn.add_nets(power=net_power, gas=net_gas)
 
     # dummy component for offset in load/source indices:
     _ = pandapower.create_load(net_power, 0, p_mw=0.01)
@@ -201,8 +201,8 @@ def test_g2p_multiple(get_gas_example, get_power_example_simple):
     assert fluid["name"] == pandapipes.get_fluid(net_gas).name
 
     # set up multinet
-    mn = create_empty_multinet("test_g2p")
-    add_nets_to_multinet(mn, power=net_power, gas=net_gas)
+    mn = MultiNet(name="test_p2g")
+    mn.add_nets(power=net_power, gas=net_gas)
 
     # dummy component for offset in load/source indices:
     _ = pandapower.create_sgen(net_power, 0, p_mw=0.01)
@@ -246,8 +246,8 @@ def test_g2g_multiple(get_gas_example):
     pandapipes.create_fluid_from_lib(net_gas2, fluid2["name"], overwrite=True)
 
     # set up multinet
-    mn = create_empty_multinet("test_g2g")
-    add_nets_to_multinet(mn, hgas_net=net_gas1, hydrogen_net=net_gas2)
+    mn = MultiNet(name="test_p2g")
+    mn.add_nets(mn, hgas_net=net_gas1, hydrogen_net=net_gas2)
 
     # dummy component for offset in sink/source indices:
     _ = pandapipes.create_sink(net_gas1, 0, mdot_kg_per_s=0.001)
@@ -293,9 +293,8 @@ def test_const_p2g_control(get_gas_example, get_power_example_simple):
     pandapower.create_load(net_power, 5, power_load)
     pandapower.create_sgen(net_power, 4, power_load)
 
-    mn = create_empty_multinet('coupled net')
-
-    add_nets_to_multinet(mn, power=net_power, gas=net_gas)
+    mn = MultiNet(name="coupled_net")
+    mn.add_nets(power=net_power, gas=net_gas)
 
     _, p2g = coupled_p2g_const_control(mn, 0, 0, 0.6, initial_run=True)
     ConstControl(net_gas, 'sink', 'mdot_kg_per_s', [0, 1])
