@@ -108,6 +108,9 @@ class P2GControlMultiEnergy(Controller):
     def conversion_factor_mw_to_kgps(self):
         return 1e3 / (self.fluid_calorific_value * 3600)
 
+    def finalize_control(self, net):
+        self.applied = False
+
 
 class G2PControlMultiEnergy(Controller):
 

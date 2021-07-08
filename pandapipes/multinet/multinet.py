@@ -11,6 +11,7 @@ from pandapower.auxiliary import ADict
 
 from pandapipes import __version__
 from pandapipes import pandapipesNet
+from pandapipes.multinet.control.run_control_multinet import  control_implementation, control_finalization, _evaluate_multinet
 
 try:
     import pplog as logging
@@ -61,7 +62,6 @@ class MultiNet(ADict):
         self['controller'] = pd.DataFrame(np.zeros(0, dtype=self['controller']), index=[])
         self.ctrl_variables = None
         self.controller_order = None
-        self.measure = None
         self['name'] = name
 
 
@@ -135,6 +135,14 @@ class MultiNet(ADict):
         return copy.deepcopy(self)
 
 
+    def runpp(self, **kwargs):
+        control_implementation(self, self.controller_order, self.ctrl_variables, max_iter=30,
+                               evaluate_net_fct=_evaluate_multinet, **kwargs)
+
+        # call finalize function of each controller
+        control_finalization(self.controller_order)
+
+
     def __repr__(self):  # pragma: no cover
         """
         defines the representation of the multinet in the console
@@ -185,4 +193,5 @@ class MultiNet(ADict):
 
 if __name__ == "__main__":
     mn = MultiNet()
-    print(mn["controller"].empty)
+    mn["measure"] = pd.DataFrame(columns=["A"])
+    print(mn)
